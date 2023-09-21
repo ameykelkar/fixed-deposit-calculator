@@ -47,7 +47,7 @@ def calculate_dates(start_date, end_date, interest, amount, tenure):
 
     data = {"Date": dates, "Interest": interest, "Current Amount": amt_arr}
     while start_date <= end_date:
-        dates.append(start_date)
+        dates.append(start_date.strftime("%m/%d/%Y"))
         interest_arr.append(interest)
         amt_arr.append(amount)
         amount = amount + interest
@@ -66,7 +66,7 @@ num1, num2 = st.columns(2)
 amount = num1.number_input("Amount", value=500000)
 apr = num2.number_input("Rate of Interest", value=7.65)
 
-date_time_format = "YYYY/MM/DD"
+date_time_format = "DD/MM/YYYY"
 date1, date2 = st.columns(2)
 start_date = date1.date_input("Start Date", format=date_time_format, value=datetime.datetime(2023, 1, 7).date())
 end_date = date2.date_input("End Date", format=date_time_format, value=datetime.datetime(2028, 7, 7).date())
