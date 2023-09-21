@@ -66,7 +66,7 @@ num1, num2 = st.columns(2)
 amount = num1.number_input("Amount", value=500000)
 apr = num2.number_input("Rate of Interest", value=7.65)
 
-date_time_format = "DD/MM/YYYY"
+date_time_format = "YYYY/MM/DD"
 date1, date2 = st.columns(2)
 start_date = date1.date_input("Start Date", format=date_time_format, value=datetime.datetime(2023, 1, 7).date())
 end_date = date2.date_input("End Date", format=date_time_format, value=datetime.datetime(2028, 7, 7).date())
@@ -84,7 +84,7 @@ stats1.subheader("Installment Amount: " + str(interest))
 stats2.subheader("Total Interest Amount: " + str(total_interest))
 stats3.subheader("Total Amount after Maturity: " + str(round(amount + total_interest, 2)))
 
-st.text(number_of_months(start_date, end_date))
+st.text("Total months: " + str(number_of_months(start_date, end_date)))
 
 st.divider()
 
