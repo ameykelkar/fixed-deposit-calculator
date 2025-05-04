@@ -1,0 +1,25 @@
+[project]
+name = "fixed-deposit-calculator"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Amey Kelkar",email = "ameyk@live.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pandas (>=2.2.3,<3.0.0)",
+    "streamlit (>=1.45.0,<2.0.0)",
+    "google-auth (>=2.39.0,<3.0.0)",
+    "google-auth-oauthlib (>=1.2.2,<2.0.0)",
+    "google-auth-httplib2 (>=0.2.0,<0.3.0)",
+    "google-api-python-client (>=2.169.0,<3.0.0)",
+    "babel (>=2.17.0,<3.0.0)",
+    "openpyxl (>=3.1.5,<4.0.0)",
+    "black (>=25.1.0,<26.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
