@@ -65,7 +65,7 @@ def create_maturity_events(google_calendar_util, row):
 
 
 def create_events(google_calendar_util, row):
-    apr = row["RATE OF INT."]
+    apr = row["RATE OF INT"]
     amt = row["DEPOSIT AMT"]
     tenure = row["INTEREST PAYABLE"]
     start_date = row["DATE"]
@@ -108,7 +108,7 @@ def main():
     project_dir = os.path.dirname(os.path.abspath(__file__))
 
     # Construct path to the data file
-    data_file_path = os.path.join(project_dir, 'data', 'data.xlsx')
+    data_file_path = os.path.join(project_dir, "data", "data.xlsx")
 
     df = pd.read_excel(data_file_path, sheet_name="vivek fd 2025")
 
