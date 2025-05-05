@@ -6,7 +6,7 @@ authors = [
     {name = "Amey Kelkar",email = "ameyk@live.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
     "pandas (>=2.2.3,<3.0.0)",
     "streamlit (>=1.45.0,<2.0.0)",
