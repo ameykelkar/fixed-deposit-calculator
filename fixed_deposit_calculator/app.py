@@ -316,6 +316,11 @@ def main():
             lambda x: f"{x:.2%}"
         )
 
+        # Format date columns
+        display_df["DATE"] = display_df["DATE"].dt.strftime("%b %d, %Y")
+        display_df["MATURITY DATE"] = display_df["MATURITY DATE"].dt.strftime("%b %d, %Y")
+        display_df["NEXT INTEREST DATE"] = display_df["NEXT INTEREST DATE"].apply(lambda x: x.strftime("%b %d, %Y") if pd.notnull(x) else x)
+
         # Convert frequency codes to full text
         frequency_map = {
             "M": "Monthly",
