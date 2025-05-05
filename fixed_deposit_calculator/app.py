@@ -6,6 +6,7 @@ import pandas as pd
 import datetime
 import ast
 import hashlib
+from babel.numbers import format_currency as babel_format_currency
 
 from cryptography.fernet import Fernet
 from dateutil.relativedelta import relativedelta
@@ -172,7 +173,9 @@ def calculate_interest_amount(deposit_amt, rate, frequency):
 
 # Function to format currency values
 def format_currency(value):
-    return f"₹{value:,.2f}"
+    # Format with Indian numbering system (en_IN locale)
+    # This will properly handle lacs and crores formatting
+    return babel_format_currency(value, 'INR', locale='en_IN')
 
 
 def check_authentication():
