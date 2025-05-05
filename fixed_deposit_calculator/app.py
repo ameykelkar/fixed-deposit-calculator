@@ -175,7 +175,7 @@ def calculate_interest_amount(deposit_amt, rate, frequency):
 def format_currency(value):
     # Format with Indian numbering system (en_IN locale)
     # This will properly handle lacs and crores formatting
-    return babel_format_currency(value, 'INR', locale='en_IN')
+    return babel_format_currency(value, 'INR', locale='en_IN', format="#,##0.00", currency_digits=False)
 
 
 def check_authentication():
