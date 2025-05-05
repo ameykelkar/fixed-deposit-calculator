@@ -5,6 +5,7 @@ import streamlit as st
 import pandas as pd
 import datetime
 import ast
+import hashlib
 
 from cryptography.fernet import Fernet
 from dateutil.relativedelta import relativedelta
@@ -20,6 +21,28 @@ def load_key() -> bytes:
     """
     key_str = st.secrets["cryptography"]["fernet_key"]
     return key_str.encode()
+
+
+@st.cache_data(show_spinner=False)
+def get_password_hash() -> str:
+    """
+    Get the hashed password from Streamlit secrets.
+    """
+    # Default to 'password' if not set in secrets
+    try:
+        return st.secrets["authentication"]["password_hash"]
+    except KeyError:
+        # This is just a fallback in case secrets aren't configured
+        # Using a hardcoded hash of 'password' as default
+        return "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"  # SHA-256 of 'password'
+
+
+def verify_password(password: str) -> bool:
+    """
+    Verify if the provided password matches the stored hash.
+    """
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    return password_hash == get_password_hash()
 
 
 def decrypt_bytes(encrypted_data: bytes, key: bytes) -> bytes:
@@ -152,8 +175,43 @@ def format_currency(value):
     return f"₹{value:,.2f}"
 
 
+def check_authentication():
+    """Check if the user is authenticated and handle the login process.
+    Returns True if authenticated, False otherwise."""
+    # Initialize session state for authentication
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        st.title("Fixed Deposit Interest Calculator")
+        st.subheader("Login Required")
+        
+        # Create login form
+        with st.form("login_form"):
+            password = st.text_input("Enter Password", type="password")
+            submit_button = st.form_submit_button("Login")
+            
+            if submit_button:
+                if verify_password(password):
+                    st.session_state.authenticated = True
+                    st.rerun()
+                else:
+                    st.error("Incorrect password. Please try again.")
+        
+        # User is not authenticated
+        return False
+    
+    # User is authenticated
+    return True
+
+
 # Main function
 def main():
+    # Check authentication before proceeding
+    if not check_authentication():
+        return
+    
+    # Only execute the rest of the code if authenticated
     st.title("Fixed Deposit Interest Calculator")
 
     # Hard-coded current date (May 4, 2025) as specified in the task
