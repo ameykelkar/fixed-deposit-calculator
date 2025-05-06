@@ -210,9 +210,8 @@ def main():
     # Only execute the rest of the code if authenticated
     st.title("Fixed Deposit Interest Calculator")
 
-    # Hard-coded current date (May 4, 2025) as specified in the task
-    today = datetime.date(2025, 5, 4)
-    today_ts = pd.Timestamp(today)
+    # Display current date
+    today = datetime.date.today()
     st.write(f"Current Date: {today.strftime('%B %d, %Y')}")
 
     # Define financial year
