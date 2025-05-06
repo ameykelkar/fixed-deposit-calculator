@@ -4,12 +4,12 @@ import os
 import streamlit as st
 import pandas as pd
 import datetime
-import ast
 import hashlib
-from babel.numbers import format_currency as babel_format_currency
 
 from cryptography.fernet import Fernet
 from dateutil.relativedelta import relativedelta
+
+from fixed_deposit_calculator.formatter import my_column_config, format_currency_to_inr
 
 # Set page config
 st.set_page_config(page_title="Fixed Deposit Interest Calculator", layout="wide")
@@ -171,13 +171,6 @@ def calculate_interest_amount(deposit_amt, rate, frequency):
         return 0
 
 
-# Function to format currency values
-def format_currency(value):
-    # Format with Indian numbering system (en_IN locale)
-    # This will properly handle lacs and crores formatting
-    return babel_format_currency(value, 'INR', locale='en_IN', format="#,##0.00", currency_digits=False)
-
-
 def check_authentication():
     """Check if the user is authenticated and handle the login process.
     Returns True if authenticated, False otherwise."""
@@ -308,18 +301,11 @@ def main():
 
         # Format currency columns for display
         display_df = df.copy()
-        display_df["DEPOSIT AMT"] = display_df["DEPOSIT AMT"].apply(format_currency)
-        display_df["INTEREST AMOUNT"] = display_df["INTEREST AMOUNT"].apply(
-            format_currency
-        )
-        display_df["RATE OF INT"] = display_df["RATE OF INT"].apply(
-            lambda x: f"{x:.2%}"
-        )
 
         # Format date columns
-        display_df["DATE"] = display_df["DATE"].dt.strftime("%b %d, %Y")
-        display_df["MATURITY DATE"] = display_df["MATURITY DATE"].dt.strftime("%b %d, %Y")
-        display_df["NEXT INTEREST DATE"] = display_df["NEXT INTEREST DATE"].apply(lambda x: x.strftime("%b %d, %Y") if pd.notnull(x) else x)
+        # display_df["DATE"] = display_df["DATE"].dt.strftime("%b %d, %Y")
+        # display_df["MATURITY DATE"] = display_df["MATURITY DATE"].dt.strftime("%b %d, %Y")
+        # display_df["NEXT INTEREST DATE"] = display_df["NEXT INTEREST DATE"].apply(lambda x: x.strftime("%b %d, %Y") if pd.notnull(x) else x)
 
         # Convert frequency codes to full text
         frequency_map = {
@@ -351,6 +337,7 @@ def main():
             ].astype(str),
             hide_index=True,
             use_container_width=True,
+            column_config=my_column_config
         )
 
         # Filter deposits with interest due this month
@@ -368,9 +355,9 @@ def main():
 
         with col2:
             total_deposit = df["DEPOSIT AMT"].sum()
-            st.metric("Total Deposit Amount", format_currency(total_deposit))
+            st.metric("Total Deposit Amount", format_currency_to_inr(total_deposit))
             total_interest = this_month_df["INTEREST AMOUNT"].sum()
-            st.metric("Total Interest Due This Month", format_currency(total_interest))
+            st.metric("Total Interest Due This Month", format_currency_to_inr(total_interest))
 
         # Display deposits with interest due this month
         st.markdown("---")
@@ -391,10 +378,11 @@ def main():
                 ].astype(str),
                 hide_index=True,
                 use_container_width=True,
+                column_config=my_column_config,
             )
 
             st.success(
-                f"Total interest to be received in {today.strftime('%B %Y')}: {format_currency(total_interest)}"
+                f"Total interest to be received in {today.strftime('%B %Y')}: {format_currency_to_inr(total_interest)}"
             )
         else:
             st.info(f"No deposits will pay interest in {today.strftime('%B %Y')}")
@@ -411,15 +399,7 @@ def main():
         if not fy_df.empty:
             # Format for display
             fy_display_df = fy_df.copy()
-            fy_display_df["DEPOSIT AMT"] = fy_display_df["DEPOSIT AMT"].apply(
-                format_currency
-            )
-            fy_display_df["FY_INTEREST_AMOUNT"] = fy_display_df[
-                "FY_INTEREST_AMOUNT"
-            ].apply(format_currency)
-            fy_display_df["RATE OF INT"] = fy_display_df["RATE OF INT"].apply(
-                lambda x: f"{x:.2%}"
-            )
+
             fy_display_df["INTEREST PAYABLE"] = fy_display_df["INTEREST PAYABLE"].map(
                 frequency_map
             )
@@ -442,12 +422,13 @@ def main():
                 ].astype(str),
                 hide_index=True,
                 use_container_width=True,
+                column_config=my_column_config,
             )
 
             # Show total FY interest
             total_fy_interest = fy_df["FY_INTEREST_AMOUNT"].sum()
             st.success(
-                f"Total interest earned in financial year {fy_start.year}-{fy_end.year}: {format_currency(total_fy_interest)}"
+                f"Total interest earned in financial year {fy_start.year}-{fy_end.year}: {format_currency_to_inr(total_fy_interest)}"
             )
         else:
             st.info(
