@@ -373,13 +373,18 @@ def main():
         
         # Create tabs
         if months:
+            # Add a heading before the tabs
+            st.header("Deposits with Interest Due")
+            
             tabs = st.tabs(months)
             
             # For each month tab
             for i, (tab, (year, month)) in enumerate(zip(tabs, future_months)):
                 with tab:
                     month_date = datetime.date(year, month, 1)
-                    st.header(f"Deposits with Interest Due in {month_date.strftime('%B %Y')}")
+                    
+                    # Add the month as a subheader inside the tab
+                    st.subheader(f"{month_date.strftime('%B %Y')}")
                     
                     # Filter deposits with interest due in this month
                     month_df = df[df["NEXT INTEREST DATE"].apply(
@@ -415,9 +420,42 @@ def main():
                         
                         # Calculate total interest for this month
                         month_total_interest = month_df["INTEREST AMOUNT"].sum()
+                        
+                        # Calculate interest for the previous month
+                        prev_month_date = month_date - pd.DateOffset(months=1)
+                        prev_month_df = df[df["NEXT INTEREST DATE"].apply(
+                            lambda x: pd.notnull(x) 
+                            and pd.Timestamp(x).month == prev_month_date.month 
+                            and pd.Timestamp(x).year == prev_month_date.year
+                        )]
+                        
+                        prev_month_total_interest = prev_month_df["INTEREST AMOUNT"].sum() if not prev_month_df.empty else 0
+                        
+                        # Calculate difference and determine arrow direction
+                        interest_diff = month_total_interest - prev_month_total_interest
+                        diff_percentage = (interest_diff / prev_month_total_interest * 100) if prev_month_total_interest > 0 else 0
+                        
+                        # Format the difference message with arrows
+                        if interest_diff > 0:
+                            diff_message = f"↑ {format_currency_to_inr(interest_diff)} (+{diff_percentage:.2f}%) compared to {prev_month_date.strftime('%B %Y')}"
+                            diff_color = "green"
+                        elif interest_diff < 0:
+                            diff_message = f"↓ {format_currency_to_inr(abs(interest_diff))} (-{abs(diff_percentage):.2f}%) compared to {prev_month_date.strftime('%B %Y')}"
+                            diff_color = "red"
+                        else:
+                            diff_message = f"No change compared to {prev_month_date.strftime('%B %Y')}"
+                            diff_color = "gray"
+                        
+                        # Display interest metrics
                         st.success(
                             f"Total interest to be received in {month_date.strftime('%B %Y')}: {format_currency_to_inr(month_total_interest)}"
                         )
+                        
+                        # Display the comparison with previous month
+                        if prev_month_total_interest > 0 or interest_diff != 0:
+                            st.markdown(f"<span style='color:{diff_color};'>{diff_message}</span>", unsafe_allow_html=True)
+                        else:
+                            st.info(f"No interest data available for {prev_month_date.strftime('%B %Y')} for comparison")
                     else:
                         st.info(f"No deposits will pay interest in {month_date.strftime('%B %Y')}")
         else:
