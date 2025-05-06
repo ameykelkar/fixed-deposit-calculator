@@ -353,33 +353,75 @@ def main():
             total_interest = this_month_df["INTEREST AMOUNT"].sum()
             st.metric("Total Interest Due This Month", format_currency_to_inr(total_interest))
 
-        # Display deposits with interest due this month
+        # Create tabs for all months with interest due
         st.markdown("---")
-        st.header(f"Deposits with Interest Due in {today.strftime('%B %Y')}")
-        if not this_month_df.empty:
-            st.dataframe(
-                display_this_month_df[
-                    [
-                        "DEP NO",
-                        "NAME OF THE DEPOSITEE",
-                        "DATE",
-                        "DEPOSIT AMT",
-                        "RATE OF INT",
-                        "INTEREST PAYABLE",
-                        "NEXT INTEREST DATE",
-                        "INTEREST AMOUNT",
-                    ]
-                ].astype(str),
-                hide_index=True,
-                use_container_width=True,
-                column_config=my_column_config,
-            )
-
-            st.success(
-                f"Total interest to be received in {today.strftime('%B %Y')}: {format_currency_to_inr(total_interest)}"
-            )
+        
+        # Get all unique months where deposits have interest due (current and future)
+        # First, filter out nulls and get all unique next interest dates
+        valid_interest_dates = df[df["NEXT INTEREST DATE"].notnull()]["NEXT INTEREST DATE"].unique()
+        
+        # Create a list of (year, month) tuples for sorting
+        month_year_tuples = [(pd.Timestamp(date).year, pd.Timestamp(date).month) for date in valid_interest_dates]
+        month_year_tuples = sorted(list(set(month_year_tuples)))
+        
+        # Filter to include only current and future months
+        current_tuple = (today.year, today.month)
+        future_months = [(y, m) for y, m in month_year_tuples if (y > today.year) or (y == today.year and m >= today.month)]
+        
+        # Create month names for tabs
+        months = [datetime.date(y, m, 1).strftime('%B %Y') for y, m in future_months]
+        
+        # Create tabs
+        if months:
+            tabs = st.tabs(months)
+            
+            # For each month tab
+            for i, (tab, (year, month)) in enumerate(zip(tabs, future_months)):
+                with tab:
+                    month_date = datetime.date(year, month, 1)
+                    st.header(f"Deposits with Interest Due in {month_date.strftime('%B %Y')}")
+                    
+                    # Filter deposits with interest due in this month
+                    month_df = df[df["NEXT INTEREST DATE"].apply(
+                        lambda x: pd.notnull(x) 
+                        and pd.Timestamp(x).month == month 
+                        and pd.Timestamp(x).year == year
+                    )]
+                    
+                    display_month_df = display_df[df["NEXT INTEREST DATE"].apply(
+                        lambda x: pd.notnull(x) 
+                        and pd.Timestamp(x).month == month 
+                        and pd.Timestamp(x).year == year
+                    )]
+                    
+                    if not month_df.empty:
+                        st.dataframe(
+                            display_month_df[
+                                [
+                                    "DEP NO",
+                                    "NAME OF THE DEPOSITEE",
+                                    "DATE",
+                                    "DEPOSIT AMT",
+                                    "RATE OF INT",
+                                    "INTEREST PAYABLE",
+                                    "NEXT INTEREST DATE",
+                                    "INTEREST AMOUNT",
+                                ]
+                            ].astype(str),
+                            hide_index=True,
+                            use_container_width=True,
+                            column_config=my_column_config,
+                        )
+                        
+                        # Calculate total interest for this month
+                        month_total_interest = month_df["INTEREST AMOUNT"].sum()
+                        st.success(
+                            f"Total interest to be received in {month_date.strftime('%B %Y')}: {format_currency_to_inr(month_total_interest)}"
+                        )
+                    else:
+                        st.info(f"No deposits will pay interest in {month_date.strftime('%B %Y')}")
         else:
-            st.info(f"No deposits will pay interest in {today.strftime('%B %Y')}")
+            st.info("No deposits with future interest payments found")
 
         # Display financial year interest summary
         st.markdown("---")
