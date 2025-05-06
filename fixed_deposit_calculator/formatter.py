@@ -12,6 +12,7 @@ my_column_config = {
     "DATE": st.column_config.DateColumn(format=date_format),
     "MATURITY DATE": st.column_config.DateColumn(format=date_format),
     "NEXT INTEREST DATE": st.column_config.DateColumn(format=date_format),
+    "PAYMENT DATE": st.column_config.DateColumn(format=date_format),
 }
 
 def format_currency_to_inr(value):

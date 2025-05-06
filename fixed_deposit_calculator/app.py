@@ -610,84 +610,58 @@ def main():
             # Collect all unique interest payment dates for all deposits in the date range
             all_dates = []
             for dates in date_range_df["DATE_RANGE_INTEREST_DATES"]:
-                all_dates.extend(dates)
+                # Filter dates to only include those in the current financial year
+                fy_dates = [date for date in dates if date_range_start <= date <= date_range_end]
+                all_dates.extend(fy_dates)
             unique_dates = sorted(list(set(all_dates)))
 
-            # Create a consolidated table with all payment details
+            # Create a flat table with all payment details
             all_payments = []
 
             # For each date, collect all deposit payment details
             for payment_date in unique_dates:
-                # Find all deposits paying interest on this date
-                date_deposits = []
-                date_total = 0
-                
-                for index, row in date_range_df.iterrows():
-                    if payment_date in row["DATE_RANGE_INTEREST_DATES"]:
-                        interest_amount = calculate_interest_amount(
-                            row["DEPOSIT AMT"], row["RATE OF INT"], row["INTEREST PAYABLE"]
-                        )
-                        date_deposits.append({
-                            "DEP NO": row["DEP NO"],
-                            "NAME OF THE DEPOSITEE": row["NAME OF THE DEPOSITEE"],
-                            "DATE": row["DATE"],
-                            "MATURITY DATE": row["MATURITY DATE"],
-                            "DEPOSIT AMT": row["DEPOSIT AMT"],
-                            "RATE OF INT": row["RATE OF INT"],
-                            "INTEREST PAYABLE": row["INTEREST PAYABLE"],
-                            "NEXT INTEREST DATE": row["NEXT INTEREST DATE"],
-                            "INTEREST AMOUNT": interest_amount
-                        })
-                        date_total += interest_amount
-                
-                # Add this date to our payments list
-                all_payments.append({
-                    "DATE": payment_date,
-                    "TOTAL_INTEREST": date_total,
-                    "DEPOSITS": date_deposits
-                })
-
-            # Convert to DataFrame and sort by date
-            if all_payments:
-                # Sort payments by date
-                all_payments.sort(key=lambda x: x["DATE"])
-                
-                # Calculate total interest for the entire period
-                total_date_range_interest = sum(payment["TOTAL_INTEREST"] for payment in all_payments)
-
-                # Show each date as a collapsable section
-                for payment in all_payments:
-                    payment_date = payment["DATE"]
-                    date_display = payment_date.strftime("%B %d, %Y")
-                    deposits = payment["DEPOSITS"]
-                    total_interest = payment["TOTAL_INTEREST"]
-                    
-                    # Create an expander for this date
-                    with st.expander(f"{date_display} - {format_currency_to_inr(total_interest)} ({len(deposits)} deposit{'' if len(deposits) == 1 else 's'})"):
-                        # Create a dataframe for this date's deposits
-                        if deposits:
-                            deposits_df = pd.DataFrame(deposits)
-                            
-                            # Show the deposits for this date
-                            st.dataframe(
-                                deposits_df,
-                                hide_index=True,
-                                use_container_width=True,
-                                column_config=my_column_config,
+                # Make sure payment date is within the financial year
+                if date_range_start <= payment_date <= date_range_end:
+                    # Find all deposits paying interest on this date
+                    for index, row in date_range_df.iterrows():
+                        if payment_date in row["DATE_RANGE_INTEREST_DATES"]:
+                            interest_amount = calculate_interest_amount(
+                                row["DEPOSIT AMT"], row["RATE OF INT"], row["INTEREST PAYABLE"]
                             )
+                            all_payments.append({
+                                "PAYMENT DATE": payment_date,
+                                "DEP NO": row["DEP NO"],
+                                "NAME OF THE DEPOSITEE": row["NAME OF THE DEPOSITEE"],
+                                "INTEREST AMOUNT": interest_amount
+                            })
 
-                            st.markdown(f"**Total Interest Amount:** {format_currency_to_inr(total_interest)}")
-                        else:
-                            st.info("No deposits found for this date")
-                # Show total at the top
+            # Sort by payment date
+            all_payments.sort(key=lambda x: x["PAYMENT DATE"])
+            
+            # Calculate total interest for the entire period
+            total_date_range_interest = sum(payment["INTEREST AMOUNT"] for payment in all_payments)
+            
+            # Create a dataframe with all payments
+            if all_payments:
+                payments_df = pd.DataFrame(all_payments)
+                
+                # Show the payments in a single table
+                st.dataframe(
+                    payments_df,
+                    hide_index=True,
+                    use_container_width=True,
+                    column_config=my_column_config,
+                )
+
+                # Show total at the bottom
                 st.success(
-                    f"Total interest earned in date range {date_range_start.strftime('%b %d, %Y')} - {date_range_end.strftime('%b %d, %Y')}: {format_currency_to_inr(total_date_range_interest)}"
+                    f"Total interest earned in financial year {date_range_start.strftime('%b %d, %Y')} - {date_range_end.strftime('%b %d, %Y')}: {format_currency_to_inr(total_date_range_interest)}"
                 )
             else:
-                st.info("No interest payment dates found in the specified date range.")
+                st.info("No interest payments found for this financial year")
         else:
             st.info(
-                f"No interest earned in date range {date_range_start.strftime('%b %d, %Y')} - {date_range_end.strftime('%b %d, %Y')}"
+                f"No interest earned in financial year {date_range_start.strftime('%b %d, %Y')} - {date_range_end.strftime('%b %d, %Y')}"
             )
 
     except Exception as e:
