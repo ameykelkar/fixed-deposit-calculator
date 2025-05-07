@@ -27,12 +27,20 @@ def load_key() -> bytes:
 @st.cache_data(show_spinner=False)
 def get_password_hash() -> str:
     """
-    Get the hashed password from Streamlit secrets.
+    Get the encrypted password hash from Streamlit secrets and decrypt it.
     """
     try:
-        return st.secrets["authentication"]["password_hash"]
+        # Get the encrypted hash and decrypt it
+        encrypted_hash = st.secrets["authentication"]["encrypted_password_hash"]
+        key = load_key()
+        f = Fernet(key)
+        decrypted_hash = f.decrypt(encrypted_hash.encode()).decode()
+        return decrypted_hash
     except KeyError:
-        st.error("Password hash not configured in secrets. Authentication failed.")
+        st.error("Encrypted password hash not configured in secrets. Authentication failed.")
+        st.stop()
+    except Exception as e:
+        st.error(f"Error decrypting password hash: {str(e)}")
         st.stop()
 
 
