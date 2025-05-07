@@ -29,13 +29,11 @@ def get_password_hash() -> str:
     """
     Get the hashed password from Streamlit secrets.
     """
-    # Default to 'password' if not set in secrets
     try:
         return st.secrets["authentication"]["password_hash"]
     except KeyError:
-        # This is just a fallback in case secrets aren't configured
-        # Using a hardcoded hash of 'password' as default
-        return "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"  # SHA-256 of 'password'
+        st.error("Password hash not configured in secrets. Authentication failed.")
+        st.stop()
 
 
 def verify_password(password: str) -> bool:
