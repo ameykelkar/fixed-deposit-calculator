@@ -32,8 +32,8 @@ def create_events(google_calendar_util, row):
     print(f"Processing: {company} (Rs.{amount}) - Day {day_of_month}")
     
     # Create event summary and description
-    summary = f"SIP Payment: {company}"
-    description = f"Folio Number: {folio_number}\nAmount: {amount}"
+    summary = f"{company} - {format_currency_inr(amount)}"
+    description = f"Folio Number: {folio_number}"
     
     # Simple start date calculation - use the first month of the current year
     today = datetime.now()
@@ -47,6 +47,11 @@ def create_events(google_calendar_util, row):
         frequency=1  # Monthly
     )
     print(f"\u2713 Created event for {company} starting {start_date.strftime('%Y-%m-%d')}")
+
+
+def format_currency_inr(amount):
+    """Format a number in Indian currency with rupee symbol"""
+    return u" \u20B9{:,}".format(amount)
 
 
 if __name__ == "__main__":
