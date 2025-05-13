@@ -98,8 +98,8 @@ def create_events(google_calendar_util, row):
         summary=summary,
         description=description,
         start_date=start_date,
-        end_date=end_date - pd.Timedelta(1, unit="d"),
         frequency=frequency,
+        end_date=end_date - pd.Timedelta(1, unit="d"),
     )
 
 
@@ -114,7 +114,7 @@ def main():
 
     google_calendar_util = GoogleCalendarUtil()
 
-    google_calendar_util.create_or_use_calendar()
+    google_calendar_util.create_or_use_calendar("Investments")
 
     google_calendar_util.clear_calendar()
 

@@ -43,15 +43,15 @@ class GoogleCalendarUtil:
     def parse_date_without_hyphens(date):
         return date.strftime("%Y%m%d")
 
-    def create_or_use_calendar(self):
+    def create_or_use_calendar(self, calendar_summary):
         calendar_list = self.service.calendarList().list(maxResults=2500).execute()
         for calendar in calendar_list["items"]:
-            if calendar["summary"] == "Investments":
+            if calendar["summary"] == calendar_summary:
                 self.calendar_id = calendar["id"]
                 print("Calendar already exists: " + self.calendar_id)
                 return
 
-        calendar = {"summary": "Investments", "timeZone": "Asia/Kolkata"}
+        calendar = {"summary": calendar_summary, "timeZone": "Asia/Kolkata"}
 
         created_calendar = self.service.calendars().insert(body=calendar).execute()
 
@@ -68,28 +68,19 @@ class GoogleCalendarUtil:
 
         print("Cleared all calendar events.")
 
-    def create_event(self, summary, description, start_date, end_date, frequency):
-        event = {
-            "summary": summary,
-            "description": description,
-            "start": {"date": str(GoogleCalendarUtil.parse_date(start_date))},
-            "end": {
+    def create_event(self, summary, description, start_date, frequency, end_date=None):
+        event = {"summary": summary, "description": description,
+                 "start": {"date": str(GoogleCalendarUtil.parse_date(start_date))}, "end": {
                 "date": str(self.parse_date(start_date)),
-            },
-            "recurrence": [
-                "RRULE:FREQ=MONTHLY;UNTIL="
-                + str(self.parse_date_without_hyphens(end_date))
-                + ";INTERVAL="
-                + str(frequency)
-            ],
-            "reminders": {
+            }, "reminders": {
                 "useDefault": False,
                 "overrides": [
                     {"method": "popup", "minutes": 900},
                     {"method": "email", "minutes": 900},
                 ],
-            },
-        }
+            }, "recurrence": [self._create_monthly_recurrence_rule(end_date, frequency)]}
+        
+        # Set recurrence rule
 
         event = (
             self.service.events()
@@ -97,6 +88,27 @@ class GoogleCalendarUtil:
             .execute()
         )
         print("Event created: %s" % (event.get("htmlLink")))
+        
+    def _create_monthly_recurrence_rule(self, end_date, frequency):
+        """Create a monthly recurrence rule.
+        
+        Args:
+            end_date: End date for the recurrence. If None, recurrence continues indefinitely.
+            frequency: The interval for recurrence (e.g., 1 for every month).
+            
+        Returns:
+            A string with the formatted recurrence rule.
+        """
+        if end_date is not None:
+            return (
+                "RRULE:FREQ=MONTHLY;UNTIL=" 
+                + str(self.parse_date_without_hyphens(end_date))
+                + ";INTERVAL=" 
+                + str(frequency)
+            )
+        else:
+            # For indefinite recurrence, omit the UNTIL part
+            return "RRULE:FREQ=MONTHLY;INTERVAL=" + str(frequency)
 
     def create_maturity_event(self, summary, description, end_date):
         event = {
